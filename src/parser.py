@@ -1,43 +1,64 @@
 import os
+from functools import wraps
+import pymupdf4llm
 import requests
-from pypdf import PdfReader
 
 
-class Parser:
-    def __init__(self):
-        pass
+def download_file_from_url(func):
+    """Decorator that downloads a file from a URL and passes the file path to the function.
 
-    @staticmethod
-    def parse(url):
-        """Downloads and parses a PDF from a given URL.
+    Args:
+        func: The function to wrap.
+
+    Returns:
+        The wrapped function.
+    """
+
+    @wraps(func)
+    def wrapper(url, *args, **kwargs):
+        """Wrapper function that handles downloading and cleanup.
 
         Args:
-             url (str): The URL of the PDF to download.
+            url: The URL to download the file from.
+            *args: Additional arguments to pass to the wrapped function.
+            **kwargs: Additional keyword arguments to pass to the wrapped function.
 
         Returns:
-             str: The extracted text from the PDF, or an empty string if an error occurs.
+            The result of the wrapped function.
         """
         try:
             response = requests.get(url)
-            response.raise_for_status()
-            if response.headers.get("content-type") != "application/pdf":
-                raise ValueError("URL does not point to a PDF file")
-            with open("file.pdf", "wb") as f:
-                f.write(response.content)
+            response.raise_for_status()  # Raise an HTTPError for bad responses
+            temp_file_path = "temp.pdf"
+            with open(temp_file_path, "wb") as temp_file:
+                temp_file.write(response.content)
+            result = func(temp_file_path, *args, **kwargs)
+            return result
 
-            text = ""
-            reader = PdfReader("file.pdf")
-            print(f"Number of pages: {len(reader.pages)}")
-            for page in reader.pages:
-                text += page.extract_text()
+        except requests.exceptions.RequestException as e:
+            print(f"Error downloading file: {e}")
+            return None
 
-            return text
-        except requests.RequestException as e:
-            print(f"Failed to download the PDF: {e}")
-            return ""
         except Exception as e:
-            print(f"An error occurred while reading the PDF: {e}")
-            return ""
+            print(f"An error occurred: {e}")
+            return None
+
         finally:
-            if os.path.exists("file.pdf"):
-                os.remove("file.pdf")
+            if os.path.exists(temp_file_path):
+                os.remove(temp_file_path)
+
+    return wrapper
+
+
+@download_file_from_url
+def parse_pdf_to_markdown(file_path):
+    """Parses a PDF file and converts it to markdown text.
+
+    Args:
+        file_path: The path to the PDF file.
+
+    Returns:
+        The markdown text.
+    """
+    markdown_text = pymupdf4llm.to_markdown(file_path)
+    return markdown_text
