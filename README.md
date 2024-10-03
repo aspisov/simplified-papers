@@ -6,5 +6,9 @@ In this project, I am implementing an end-to-end pipeline (potentially service) 
 ### PDF Parsing
 The first step is to extract the text from the PDF. There are multiple ways to do this: algorithmic parsing and OCR. The advantage of OCR is that it can handle LaTeX equations. However, existing open-source OCR models like [Nougat](https://github.com/facebookresearch/nougat) aren't significantly better than algorithmic parsing and are much slower. Therefore, I am opting for algorithmic parsing for now.
 
+### Text Summarization
+The best results can be achieved by using a model with huge context window like Gemini, however 
+
+
 ## License
 This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for more details.
