@@ -1,6 +1,7 @@
 import os
 from functools import wraps
 import pymupdf4llm
+from pypdf import PdfReader
 import requests
 
 
@@ -62,3 +63,21 @@ def parse_pdf_to_markdown(file_path):
     """
     markdown_text = pymupdf4llm.to_markdown(file_path)
     return markdown_text
+
+
+@download_file_from_url
+def parse_pdf_to_txt(file_path):
+    """Parses a PDF file and converts it to plain text.
+
+    Args:
+        file_path: The path to the PDF file.
+
+    Returns:
+        The plain text.
+    """
+    text = ""
+    reader = PdfReader(file_path)
+    print(f"Number of pages: {len(reader.pages)}")
+    for page in reader.pages:
+        text += page.extract_text()
+    return text
